@@ -1,0 +1,36 @@
+# Cargo.lockを含めることが一般的ですが、開発環境に応じて決定してください
+# Cargo.lock
+
+# Cargoのビルド出力
+/target/
+# lambdaのビルド出力
+/lambda_output/
+
+# バイナリファイル
+*.rs.bk
+
+# Rustのビルドアーチファクト
+*.dSYM
+*.o
+*.so
+*.dll
+*.exe
+
+# プロジェクト設定やローカル環境の一時ファイル
+*.rs.bk
+*.log
+*.toml
+
+# 構成ファイルや機密情報
+.env
+*.env
+
+# ユーザ設定ファイル
+.idea/
+.vscode/
+
+# OSやエディタによる一時ファイル
+.DS_Store
+Thumbs.db
+
+docker/s3-mock-data/*
