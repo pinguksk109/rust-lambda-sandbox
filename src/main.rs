@@ -1,15 +1,10 @@
-// mod s3;
+mod s3;
 
-use clap::Parser;
 use lambda_runtime::{service_fn, Error, LambdaEvent};
 use serde_json::{Value, json};
-use std::{env, io::Write};
-use tracing::trace;
-
-use serde::{Deserialize, Serialize};
 
 async fn handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
-    // let contents = s3::download_file_from_s3("sample_word_document.docx");
+    let contents = s3::download_file_from_s3("sample_word_document.docx");
     
     let response = json!({
         "statusCode": 200,
