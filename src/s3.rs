@@ -1,27 +1,41 @@
-use aws_sdk_s3::{Client, Config, Error};
 use aws_config::meta::region::RegionProviderChain;
-use bytes::Bytes;
+use std::{fs::File, io::{self, Write}, path::PathBuf, process::exit};
 
-const BUCKET_NAME: &str = "your-bucket-name";
-const REGION: &str = "us-east-1";
+use aws_sdk_s3::{Client, Config};
+use clap::Parser;
+use tracing::trace;
 
-pub async fn download_file_from_s3(path: &str) -> Result<Bytes, Error> {
-    let region_provider = RegionProviderChain::first_try(REGION).or_else(REGION);
-    
-    let config = aws_config::from_env().region(region_provider).load().await;
-    
-    let client = Client::new(&config);
+#[derive(Debug, Parser)]
+struct Opt {
+    #[structopt(long)]
+    bucket: String,
+    #[structopt(long)]
+    object: String,
+    #[structopt(long)]
+    destination: PathBuf,
+}
 
-    let resp = client.get_object()
-        .bucket(BUCKET_NAME)
-        .key(path)
+async fn get_object(client: Client, opt: Opt) -> Result<usize, io::Error> {
+    trace!("bucket:      {}", opt.bucket);
+    trace!("object:      {}", opt.object);
+    trace!("destination: {}", opt.destination.display());
+
+    let mut file = File::create(opt.destination.clone())?;
+
+    let mut object = client
+        .get_object()
+        .bucket(opt.bucket)
+        .key(opt.object)
         .send()
         .await?;
-
-    let mut contents = Bytes::new();
-    if let Some(body) = resp.body {
-        contents = body.collect().await?.into_bytes(); // AggregatedBytesをBytesに変換
+    let mut byte_count = 0_usize;
+    while let Some(bytes) = object.body.try_next().await? {
+        let bytes_len = bytes.len();
+        file.write_all(&bytes)?;
+        trace!("Intermediate write of {bytes_len}");
+        byte_count += bytes_len;
     }
 
-    Ok(contents)
+    Ok(byte_count)
 }
+
